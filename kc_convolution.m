@@ -85,14 +85,15 @@ for channel = 1:channel_size
             (weights_vectorized * image_vectorized) + bias_one_channel;
         
         % dot product (slower, larger error, why?)
-%         vec_weights = repmat(reshape(pagetranspose(weights_one_channel...
-%             ),[],1),1,(image_size+2*pad_size-kernel_size+1)^2);
-%         output_one_channel = ...
-%             dot(vec_weights , image_vectorized) + bias_one_channel;
+        %         vec_weights = repmat(reshape(pagetranspose(weights_one_channel...
+        %             ),[],1),1,(image_size+2*pad_size-kernel_size+1)^2);
+        %         output_one_channel = ...
+        %             dot(vec_weights , image_vectorized) + bias_one_channel;
         
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% activation
+    %alpha = single(fi(0.1,1,16,11));
     if activation == "leaky"
         output_one_channel = max...
             (0, output_one_channel) + 0.1 .* min(0, output_one_channel);

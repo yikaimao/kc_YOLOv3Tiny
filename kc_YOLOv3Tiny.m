@@ -1,13 +1,11 @@
 % Yikai Mao 1/15 2021
 % YOLOv3Tiny inference for KiloCore 2
 
-load('weights_folded.mat');
-load('bias_folded.mat');
-%weights_folded = cellfun(@half,weights_folded,'UniformOutput',false);
-%bias_folded = cellfun(@half,bias_folded,'UniformOutput',false);
-
 %library = 'matlab';
 library = 'kilocore';
+
+load('weights_folded.mat');
+load('bias_folded.mat');
 
 % read input image
 imgfile = 'images/person.jpg';
@@ -15,7 +13,15 @@ I = imread(imgfile);
 I = im2single(I);
 inputSz = 416;
 input = letterbox_image(I, inputSz);
-%input = half(input);
+
+% for i=1:13
+%     weights_folded{i}=fi(weights_folded{i},1,16,11);
+%     bias_folded{i}=fi(bias_folded{i},1,16,11);
+%     weights_folded{i}=single(weights_folded{i});
+%     bias_folded{i}=single(bias_folded{i});
+% end
+% input = fi(input,1,16,11);
+% input = single(input);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% YOLO CNN FEATURE EXTRACTOR
 
