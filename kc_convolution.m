@@ -18,10 +18,22 @@ function output = kc_convolution(library, image, weights, bias, filters, kernel_
 image_size = size(image, 1);
 image_depth = size(image, 3);
 channel_size = filters;
+quantize = 0; %takes ~35minutes!
 
 % output_width = (image_width - kernel_width + 2 * padding) / stride + 1
 % output_height = (image_height - kernel_height + 2 * padding) / stride + 1
 output = zeros(image_size, image_size, channel_size, 'single');
+
+if quantize
+    F = fimath();
+    F.ProductMode = 'SpecifyPrecision';
+    F.ProductWordLength = 16;
+    F.ProductFractionLength = 11;
+    F.SumMode = 'SpecifyPrecision';
+    F.SumWordLength = 16;
+    F.SumFractionLength = 11;
+    output = fi(output,1,16,11,F);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% image padding
 if pad == "padding"
@@ -81,6 +93,12 @@ for channel = 1:channel_size
         
     elseif library == "kilocore"
         
+        if quantize
+            weights_vectorized = fi(weights_vectorized,1,16,11,F);
+            image_vectorized = fi(image_vectorized,1,16,11,F);
+            bias_one_channel = fi(bias_one_channel,1,16,11,F);
+        end
+        
         output_one_channel = ...
             (weights_vectorized * image_vectorized) + bias_one_channel;
         
@@ -93,11 +111,19 @@ for channel = 1:channel_size
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% activation
-    %alpha = single(fi(0.1,1,16,11));
+    
+    if quantize
+        alpha = fi(0.1,1,16,11,F);
+    else
+        alpha = single(0.1);
+    end
+    
     if activation == "leaky"
         output_one_channel = max...
-            (0, output_one_channel) + 0.1 .* min(0, output_one_channel);
+            (0, output_one_channel) + alpha .* min(0, output_one_channel);
     end
+    
+    %     output_one_channel = single(output_one_channel);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% output result
     if library == "matlab"
@@ -115,6 +141,10 @@ for channel = 1:channel_size
         
     end
     
+end
+
+if quantize
+    output=single(output);
 end
 
 end

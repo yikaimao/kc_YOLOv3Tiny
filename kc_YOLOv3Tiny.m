@@ -1,8 +1,10 @@
 % Yikai Mao 1/15 2021
 % YOLOv3Tiny inference for KiloCore 2
+% error calculation is for person.jpg only
 
 %library = 'matlab';
 library = 'kilocore';
+quantize = 0; %takes ~35minutes!
 
 load('weights_folded.mat');
 load('bias_folded.mat');
@@ -14,15 +16,20 @@ I = im2single(I);
 inputSz = 416;
 input = letterbox_image(I, inputSz);
 
-% for i=1:13
-%     weights_folded{i}=fi(weights_folded{i},1,16,11);
-%     bias_folded{i}=fi(bias_folded{i},1,16,11);
-%     weights_folded{i}=single(weights_folded{i});
-%     bias_folded{i}=single(bias_folded{i});
-% end
-% input = fi(input,1,16,11);
-% input = single(input);
-
+if quantize
+    F = fimath();
+    F.ProductMode = 'SpecifyPrecision';
+    F.ProductWordLength = 16;
+    F.ProductFractionLength = 11;
+    F.SumMode = 'SpecifyPrecision';
+    F.SumWordLength = 16;
+    F.SumFractionLength = 11;
+    for i=1:13
+        weights_folded{i}=fi(weights_folded{i},1,16,11,F);
+        bias_folded{i}=fi(bias_folded{i},1,16,11,F);
+    end
+    input = fi(input,1,16,11,F);
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% YOLO CNN FEATURE EXTRACTOR
 
 % convolution 1 -> maxpool 1
@@ -79,7 +86,7 @@ output8 = kc_convolution(library, output7, weights_folded{8}, bias_folded{8}, 25
 load('data/leaky_relu_8.mat');
 [output_error_8, error_layer_8_mean, error_layer_8_max] = kc_error(output8, leaky_relu_8);
 
-% convolution 8
+% convolution 9
 output9 = kc_convolution(library, output8, weights_folded{9}, bias_folded{9}, 512, 3, 'padding', 'leaky');
 
 load('data/leaky_relu_9.mat');
@@ -133,9 +140,7 @@ load('data/anchors.mat')
 load('data/classNames.mat')
 
 output10=reshape(output10, 13, 13, 85, 3);
-%output10=dlarray(output10, 'SSCB');
 output13=reshape(output13, 26, 26, 85, 3);
-%output13=dlarray(output13, 'SSCB');
 
 rawOutput = cell(2,1);
 rawOutput{1} = output10;
@@ -215,7 +220,7 @@ if ~isempty(scores)
         'RatioType','Union','OverlapThreshold', overlapThreshold); % Union/Min
     
     annotations = string(labels) + ": " + string(scores);
-    output = insertObjectAnnotation(input, 'rectangle', bboxes, cellstr(annotations));
+    output = insertObjectAnnotation(single(input), 'rectangle', bboxes, cellstr(annotations));
 else
     % nothing detected
     output = input;
@@ -227,7 +232,7 @@ figure
 
 % display original image
 subplot(1,2,1);
-imshow(input)
+imshow(single(input))
 title('Original input image')
 
 % display result

@@ -7,6 +7,8 @@
 % convolution stride must be 1 (shouldn't be too hard to change)
 % https://towardsdatascience.com/how-are-convolutions-actually-performed-under-the-hood-226523ce7fbf
 % https://leonardoaraujosantos.gitbook.io/artificial-inteligence/machine_learning/deep_learning/convolution_layer/making_faster#im-2-col
+% https://stackoverflow.com/questions/36761794/rearrange-sliding-blocks-into-columns-for-a-3d-array-im2col-in-3d-matlab
+% https://stackoverflow.com/questions/25449279/efficient-implementation-of-im2col-and-col2im/25454746#25454746
 
 % WARNING:
 % MATLAB use column-major layout!
